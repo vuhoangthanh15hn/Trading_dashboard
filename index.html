@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===================================================
+   THEME VARIABLES
+   =================================================== */
+:root[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --bg-elevated: #141414;
+  --bg-overlay: #1a1a1a;
+  --border: #262626;
+  --border-strong: #333;
+  --text: #fafafa;
+  --text-muted: #888;
+  --text-dim: #555;
+  --accent: #00e5ff;
+  --accent-dim: rgba(0, 229, 255, 0.12);
+  --danger: #ff4757;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+  --grid-line: rgba(255,255,255,0.02);
+}
+:root[data-theme="light"] {
+  --bg: #fafafa;
+  --bg-elevated: #ffffff;
+  --bg-overlay: #f0f0f0;
+  --border: #e5e5e5;
+  --border-strong: #d0d0d0;
+  --text: #0a0a0a;
+  --text-muted: #666;
+  --text-dim: #999;
+  --accent: #0099b8;
+  --accent-dim: rgba(0, 153, 184, 0.1);
+  --danger: #cc3344;
+  --shadow: 0 4px 20px rgba(0,0,0,0.06);
+  --grid-line: rgba(0,0,0,0.025);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 24px;
+  transition: background-color 0.25s, color 0.25s;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ===================================================
+   HEADER
+   =================================================== */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -1px;
+  width: 120px; height: 1px;
+  background: var(--accent);
+}
+
+.logo-slot {
+  width: 48px; height: 48px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  transition: all 0.2s;
+}
+.logo-slot:hover { border-color: var(--accent); color: var(--accent); }
+.logo-slot img { width: 100%; height: 100%; object-fit: contain; }
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  outline: none;
+  cursor: text;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.title:hover { background: var(--bg-elevated); }
+.title:focus { background: var(--bg-elevated); }
+.title:empty::before {
+  content: 'Dashboard';
+  color: var(--text-dim);
+}
+
+.utc-clock {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.utc-clock .label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.utc-clock .pulse {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+.theme-toggle {
+  width: 40px; height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.theme-toggle:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+.icon-btn {
+  width: 40px; height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+.icon-btn:hover { border-color: var(--accent); transform: translateY(-1px); color: var(--accent); }
+
+/* ===================================================
+   DRAG & DROP STATES
+   =================================================== */
+.watchlist-tab,
+.chart-card-header {
+  cursor: grab;
+}
+.watchlist-tab.dragging,
+.chart-card.dragging {
+  opacity: 0.4;
+}
+.chart-card.dragging .chart-card-header {
+  cursor: grabbing;
+}
+/* While drag is active, disable iframe pointer events so dragover bubbles correctly */
+body.dragging-active .chart-container { pointer-events: none; }
+
+/* ===================================================
+   CONTROLS BAR
+   =================================================== */
+.controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.add-pair { display: flex; gap: 8px; align-items: center; }
+
+.pair-input {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  width: 220px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  text-transform: uppercase;
+}
+.pair-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.pair-input::placeholder { color: var(--text-dim); text-transform: none; font-weight: 400; }
+
+.btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+  letter-spacing: 0.02em;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--accent-dim); }
+.btn:active { transform: translateY(0); }
+
+.timeframes {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 3px;
+  border-radius: 6px;
+}
+.tf-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 6px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+.tf-btn:hover { color: var(--text); }
+.tf-btn.active {
+  background: var(--accent);
+  color: #000;
+}
+
+.spacer { flex: 1; }
+
+.count-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.count-pill .num { color: var(--accent); font-weight: 700; font-size: 13px; }
+
+.hint {
+  width: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: -16px;
+  margin-bottom: 16px;
+  padding-left: 2px;
+  letter-spacing: 0.02em;
+}
+.hint code {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+  font-size: 10px;
+}
+
+/* ===================================================
+   WATCHLIST TABS
+   =================================================== */
+.watchlists {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.watchlist-tab {
+  position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+.watchlist-tab:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.watchlist-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.watchlist-tab .tab-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  opacity: 0.7;
+  padding: 1px 6px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+}
+[data-theme="light"] .watchlist-tab .tab-count { background: rgba(0,0,0,0.06); }
+.watchlist-tab .tab-delete {
+  display: none;
+  width: 16px; height: 16px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  margin-left: -2px;
+  opacity: 0.6;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+}
+.watchlist-tab.active .tab-delete { display: inline-flex; }
+.watchlist-tab .tab-delete:hover { opacity: 1; color: var(--danger); }
+
+.add-watchlist-btn {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-dim);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.add-watchlist-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===================================================
+   QUICK ADD CHIPS
+   =================================================== */
+.quick-add {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.quick-add-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+}
+.quick-add-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding-right: 14px;
+  border-right: 1px solid var(--border);
+}
+.quick-add-group:last-of-type { border-right: none; padding-right: 0; }
+.quick-add-group-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-right: 4px;
+  text-transform: uppercase;
+}
+.chip {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip.added { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* ===================================================
+   GRID
+   =================================================== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  body { padding: 16px; }
+  .header { flex-wrap: wrap; gap: 12px; }
+  .title { font-size: 20px; }
+  .pair-input { width: 160px; }
+}
+
+.chart-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chart-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 2px 4px;
+}
+.chart-symbol {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.chart-symbol .ex { color: var(--text-dim); font-weight: 400; }
+.chart-symbol .tk { color: var(--text); }
+
+.chart-remove {
+  width: 24px; height: 24px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chart-remove:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.chart-container {
+  width: 100%;
+  height: 800px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 80px 20px;
+  text-align: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-muted);
+}
+.empty-state h3 {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 18px;
+}
+.empty-state p { font-size: 14px; }
+
+/* ===================================================
+   FOOTER
+   =================================================== */
+.footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+#logo-upload { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ============== HEADER ============== -->
+<header class="header">
+  <label class="logo-slot" for="logo-upload" id="logo-slot" title="Click để upload logo">
+    <span id="logo-placeholder">LOGO</span>
+    <img id="logo-img" style="display:none" alt="logo">
+  </label>
+  <input type="file" id="logo-upload" accept="image/*">
+
+  <h1 class="title" id="title" contenteditable="true" spellcheck="false">Crypto Dashboard</h1>
+
+  <div class="utc-clock">
+    <span class="pulse"></span>
+    <span class="label">UTC</span>
+    <span id="utc-time">--:--:--</span>
+  </div>
+
+  <button class="icon-btn" id="export-btn" title="Tải file backup JSON">⬇</button>
+  <input type="file" id="import-file" accept=".json,application/json" style="display:none">
+  <button class="icon-btn" id="import-btn" title="Khôi phục watchlist từ file JSON">⬆</button>
+  <button class="theme-toggle" id="theme-toggle" title="Đổi chế độ sáng/tối">🌙</button>
+</header>
+
+<!-- ============== WATCHLIST TABS ============== -->
+<div class="watchlists" id="watchlists"></div>
+
+<!-- ============== CONTROLS ============== -->
+<div class="controls">
+  <div class="add-pair">
+    <input type="text" class="pair-input" id="pair-input" placeholder="VD: BTCUSDT, XAUUSD, VNM, AAPL..." maxlength="40">
+    <button class="btn" id="add-btn">+ Thêm cặp</button>
+  </div>
+
+  <div class="timeframes" id="timeframes">
+    <button class="tf-btn" data-tf="1">1m</button>
+    <button class="tf-btn" data-tf="5">5m</button>
+    <button class="tf-btn" data-tf="15">15m</button>
+    <button class="tf-btn" data-tf="60">1H</button>
+    <button class="tf-btn active" data-tf="240">4H</button>
+    <button class="tf-btn" data-tf="D">1D</button>
+    <button class="tf-btn" data-tf="W">1W</button>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="count-pill"><span class="num" id="count">0</span> cặp đang theo dõi</div>
+</div>
+
+<div class="hint">
+  ℹ️ Tự nhận diện sàn: <code>VNM</code> → HOSE, <code>AAPL</code> → NASDAQ, <code>BTCUSDT</code> → BINANCE, <code>XAUUSD</code> → OANDA. Hoặc gõ đầy đủ <code>EXCHANGE:SYMBOL</code>.
+</div>
+
+<!-- ============== QUICK ADD CHIPS ============== -->
+<div class="quick-add">
+  <span class="quick-add-label">QUICK ADD</span>
+
+  <div class="quick-add-group">
+    <span class="quick-add-group-label">Crypto</span>
+    <button class="chip" data-add="BINANCE:BTCUSDT">BTC</button>
+    <button class="chip" data-add="BINANCE:ETHUSDT">ETH</button>
+    <button class="chip" data-add="BINANCE:SOLUSDT">SOL</button>
+    <button class="chip" data-add="BINANCE:BNBUSDT">BNB</button>
+    <button class="chip" data-add="BINANCE:XRPUSDT">XRP</button>
+    <button class="chip" data-add="BINANCE:ADAUSDT">ADA</button>
+  </div>
+
+  <div class="quick-add-group">
+    <span class="quick-add-group-label">Forex</span>
+    <button class="chip" data-add="FX:EURUSD">EUR/USD</button>
+    <button class="chip" data-add="FX:GBPUSD">GBP/USD</button>
+    <button class="chip" data-add="FX:USDJPY">USD/JPY</button>
+    <button class="chip" data-add="FX:AUDUSD">AUD/USD</button>
+    <button class="chip" data-add="FX:USDCAD">USD/CAD</button>
+    <button class="chip" data-add="OANDA:XAUUSD">XAU/USD</button>
+  </div>
+
+  <div class="quick-add-group">
+    <span class="quick-add-group-label">Stocks</span>
+    <button class="chip" data-add="NASDAQ:AAPL">AAPL</button>
+    <button class="chip" data-add="NASDAQ:TSLA">TSLA</button>
+    <button class="chip" data-add="NASDAQ:NVDA">NVDA</button>
+    <button class="chip" data-add="NASDAQ:GOOGL">GOOGL</button>
+    <button class="chip" data-add="NASDAQ:META">META</button>
+    <button class="chip" data-add="NASDAQ:MSFT">MSFT</button>
+  </div>
+
+  <div class="quick-add-group">
+    <span class="quick-add-group-label">Metals</span>
+    <button class="chip" data-add="OANDA:XAUUSD">XAU/USD</button>
+    <button class="chip" data-add="OANDA:XAGUSD">XAG/USD</button>
+    <button class="chip" data-add="TVC:USOIL">WTI Oil</button>
+  </div>
+
+  <div class="quick-add-group">
+    <span class="quick-add-group-label">VN Stocks</span>
+    <button class="chip" data-add="HOSE:VNM">VNM</button>
+    <button class="chip" data-add="HOSE:HPG">HPG</button>
+    <button class="chip" data-add="HOSE:VIC">VIC</button>
+    <button class="chip" data-add="HOSE:MWG">MWG</button>
+    <button class="chip" data-add="HOSE:FPT">FPT</button>
+    <button class="chip" data-add="HOSE:VCB">VCB</button>
+    <button class="chip" data-add="FX_IDC:USDVND">USD/VND</button>
+  </div>
+
+  <div class="quick-add-group">
+    <span class="quick-add-group-label">VN ETFs</span>
+    <button class="chip" data-add="HOSE:E1VFVN30">E1VFVN30</button>
+    <button class="chip" data-add="HOSE:FUESSVFL">FUESSVFL</button>
+    <button class="chip" data-add="HOSE:FUEVFVND">FUEVFVND</button>
+    <button class="chip" data-add="HOSE:FUEVN100">FUEVN100</button>
+    <button class="chip" data-add="HOSE:FUESSV50">FUESSV50</button>
+  </div>
+</div>
+
+<!-- ============== GRID ============== -->
+<div class="grid" id="grid"></div>
+
+<footer class="footer">
+  REAL-TIME DATA POWERED BY <a href="https://www.tradingview.com" target="_blank">TRADINGVIEW</a>
+  &nbsp;·&nbsp; CLICK TIÊU ĐỀ ĐỂ CHỈNH SỬA &nbsp;·&nbsp; CLICK Ô LOGO ĐỂ UPLOAD
+</footer>
+
+<!-- TradingView Widget Script -->
+<script src="https://s3.tradingview.com/tv.js"></script>
+
+<script>
+/* ===================================================
+   STATE & PERSISTENCE
+   =================================================== */
+const STORAGE_KEYS = {
+  watchlists: 'dashboard_watchlists',
+  activeWatchlistId: 'dashboard_active_watchlist',
+  theme: 'dashboard_theme',
+  interval: 'dashboard_interval',
+  title: 'dashboard_title',
+  logo: 'dashboard_logo'
+};
+
+const DEFAULT_WATCHLISTS = [
+  {
+    id: 'crypto',
+    name: 'Crypto',
+    pairs: [
+      'BINANCE:BTCUSDT',
+      'BINANCE:ETHUSDT',
+      'BINANCE:SOLUSDT',
+      'BINANCE:BNBUSDT'
+    ]
+  },
+  {
+    id: 'forex',
+    name: 'Forex',
+    pairs: [
+      'FX:EURUSD',
+      'FX:GBPUSD',
+      'FX:USDJPY',
+      'OANDA:XAUUSD'
+    ]
+  },
+  {
+    id: 'stocks',
+    name: 'Stocks',
+    pairs: [
+      'NASDAQ:AAPL',
+      'NASDAQ:NVDA',
+      'NASDAQ:TSLA',
+      'NASDAQ:GOOGL'
+    ]
+  }
+];
+
+/* Migrate old flat pairs list into 3 default watchlists by exchange */
+function migratePairsToWatchlists(pairs) {
+  const lists = JSON.parse(JSON.stringify(DEFAULT_WATCHLISTS));
+  lists.forEach(wl => wl.pairs = []);
+  const cryptoExch = ['BINANCE','COINBASE','BITSTAMP','KRAKEN','BYBIT','OKX','GEMINI','HUOBI'];
+  const forexExch  = ['FX','FX_IDC','OANDA','TVC','FOREXCOM','CAPITALCOM'];
+  pairs.forEach(symbol => {
+    const ex = (symbol.split(':')[0] || '').toUpperCase();
+    if (cryptoExch.includes(ex)) lists[0].pairs.push(symbol);
+    else if (forexExch.includes(ex)) lists[1].pairs.push(symbol);
+    else lists[2].pairs.push(symbol);
+  });
+  return lists;
+}
+
+function loadWatchlists() {
+  // 1. New format
+  const stored = localStorage.getItem(STORAGE_KEYS.watchlists);
+  if (stored) {
+    try {
+      const wls = JSON.parse(stored);
+      if (Array.isArray(wls) && wls.length > 0) return wls;
+    } catch (e) {}
+  }
+  // 2. Migrate from old flat 'dashboard_pairs' format
+  const oldPairs = localStorage.getItem('dashboard_pairs');
+  if (oldPairs) {
+    try {
+      const pairs = JSON.parse(oldPairs);
+      if (Array.isArray(pairs) && pairs.length > 0) {
+        return migratePairsToWatchlists(pairs);
+      }
+    } catch (e) {}
+  }
+  // 3. Fresh defaults
+  return JSON.parse(JSON.stringify(DEFAULT_WATCHLISTS));
+}
+
+const _initWls = loadWatchlists();
+let state = {
+  watchlists: _initWls,
+  activeWatchlistId: localStorage.getItem(STORAGE_KEYS.activeWatchlistId) || _initWls[0].id,
+  theme: localStorage.getItem(STORAGE_KEYS.theme) || 'dark',
+  interval: localStorage.getItem(STORAGE_KEYS.interval) || '240',
+  title: localStorage.getItem(STORAGE_KEYS.title) || 'Crypto Dashboard',
+  logo: localStorage.getItem(STORAGE_KEYS.logo) || null
+};
+// Make sure activeWatchlistId points to an existing watchlist
+if (!state.watchlists.some(w => w.id === state.activeWatchlistId)) {
+  state.activeWatchlistId = state.watchlists[0].id;
+}
+
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.watchlists, JSON.stringify(state.watchlists));
+    localStorage.setItem(STORAGE_KEYS.activeWatchlistId, state.activeWatchlistId);
+    localStorage.setItem(STORAGE_KEYS.theme, state.theme);
+    localStorage.setItem(STORAGE_KEYS.interval, state.interval);
+    localStorage.setItem(STORAGE_KEYS.title, state.title);
+    if (state.logo) localStorage.setItem(STORAGE_KEYS.logo, state.logo);
+  } catch (e) {
+    console.warn('localStorage write failed:', e);
+  }
+}
+
+/* Returns the currently-active watchlist object (mutable reference) */
+function activeList() {
+  return state.watchlists.find(w => w.id === state.activeWatchlistId) || state.watchlists[0];
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+/* ===================================================
+   HELPERS
+   =================================================== */
+/* ===================================================
+   SMART SYMBOL RESOLVER
+   Maps user-typed tickers (without exchange prefix) to
+   the correct EXCHANGE:SYMBOL based on asset type.
+   =================================================== */
+const SYMBOL_RESOLVER = {
+  // ---- Metals & Commodities (OANDA = reliable free data) ----
+  'XAUUSD': 'OANDA:XAUUSD',   // Gold
+  'XAGUSD': 'OANDA:XAGUSD',   // Silver
+  'GOLD':   'OANDA:XAUUSD',
+  'SILVER': 'OANDA:XAGUSD',
+  'XPTUSD': 'OANDA:XPTUSD',   // Platinum
+  'XPDUSD': 'OANDA:XPDUSD',   // Palladium
+  'WTI':    'TVC:USOIL',      // Crude oil
+  'BRENT':  'TVC:UKOIL',
+
+  // ---- Vietnamese ETFs (HOSE) ----
+  'E1VFVN30': 'HOSE:E1VFVN30',
+  'FUESSVFL': 'HOSE:FUESSVFL',
+  'FUEVFVND': 'HOSE:FUEVFVND',
+  'FUEVN100': 'HOSE:FUEVN100',
+  'FUESSV50': 'HOSE:FUESSV50',
+  'FUEMAV30': 'HOSE:FUEMAV30',
+  'FUEDCMID': 'HOSE:FUEDCMID',
+  'FUEKIV30': 'HOSE:FUEKIV30',
+
+  // ---- Forex pairs (use FX_IDC for exotic, FX for majors) ----
+  'USDVND': 'FX_IDC:USDVND',
+  'EURUSD': 'FX:EURUSD',
+  'GBPUSD': 'FX:GBPUSD',
+  'USDJPY': 'FX:USDJPY',
+  'AUDUSD': 'FX:AUDUSD',
+  'USDCAD': 'FX:USDCAD',
+  'USDCHF': 'FX:USDCHF',
+  'NZDUSD': 'FX:NZDUSD',
+  'EURJPY': 'FX:EURJPY',
+  'EURGBP': 'FX:EURGBP',
+
+  // ---- Indices ----
+  'SPX':   'SP:SPX',
+  'NDX':   'NASDAQ:NDX',
+  'DJI':   'DJ:DJI',
+  'VNINDEX': 'HOSE:VNINDEX',
+  'VN30':  'HOSE:VN30'
+};
+
+function normalizeSymbol(input) {
+  let s = (input || '').trim().toUpperCase().replace(/\s+/g, '');
+  // strip stray leading/trailing colons
+  s = s.replace(/^:+|:+$/g, '');
+  if (!s) return null;
+
+  // 1. User typed full EXCHANGE:SYMBOL → use as-is
+  if (s.includes(':')) return s;
+
+  // 2. Known mapping in resolver
+  if (SYMBOL_RESOLVER[s]) return SYMBOL_RESOLVER[s];
+
+  // 3. Vietnamese ETF heuristic (FUE..., E1VF...)
+  if (/^FUE/.test(s) || /^E1VF/.test(s)) return 'HOSE:' + s;
+
+  // 4. Crypto: ends with stablecoin suffix
+  if (/(USDT|USDC|BUSD|FDUSD|TUSD|DAI)$/.test(s)) return 'BINANCE:' + s;
+
+  // 5. 6-letter forex pair (3+3 currencies)
+  if (/^[A-Z]{6}$/.test(s)) return 'FX:' + s;
+
+  // 6. 3-letter all caps → most likely Vietnamese stock (VNM, HPG, FPT...)
+  if (/^[A-Z]{3}$/.test(s)) return 'HOSE:' + s;
+
+  // 7. 4-5 letter all caps → most likely US stock (AAPL, TSLA, NVDA...)
+  if (/^[A-Z]{4,5}$/.test(s)) return 'NASDAQ:' + s;
+
+  // 8. Fallback to BINANCE (preserves original crypto behavior)
+  return 'BINANCE:' + s;
+}
+
+function widgetIdFor(symbol, idx) {
+  return 'tv_' + symbol.replace(/[^A-Z0-9]/gi, '_') + '_' + idx;
+}
+
+/* ===================================================
+   THEME
+   =================================================== */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+  document.getElementById('theme-toggle').textContent = state.theme === 'dark' ? '🌙' : '☀️';
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  persist();
+  renderGrid();
+});
+
+/* ===================================================
+   TITLE & LOGO
+   =================================================== */
+const titleEl = document.getElementById('title');
+titleEl.textContent = state.title;
+
+titleEl.addEventListener('blur', () => {
+  state.title = titleEl.textContent.trim() || 'Crypto Dashboard';
+  titleEl.textContent = state.title;
+  persist();
+});
+titleEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); titleEl.blur(); }
+});
+
+const logoImg = document.getElementById('logo-img');
+const logoPlaceholder = document.getElementById('logo-placeholder');
+if (state.logo) {
+  logoImg.src = state.logo;
+  logoImg.style.display = 'block';
+  logoPlaceholder.style.display = 'none';
+}
+document.getElementById('logo-upload').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    state.logo = ev.target.result;
+    logoImg.src = state.logo;
+    logoImg.style.display = 'block';
+    logoPlaceholder.style.display = 'none';
+    persist();
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ===================================================
+   UTC CLOCK
+   =================================================== */
+function updateClock() {
+  const d = new Date();
+  const hh = String(d.getUTCHours()).padStart(2, '0');
+  const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  const ss = String(d.getUTCSeconds()).padStart(2, '0');
+  document.getElementById('utc-time').textContent = `${hh}:${mm}:${ss}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ===================================================
+   TIMEFRAMES
+   =================================================== */
+document.getElementById('timeframes').addEventListener('click', (e) => {
+  if (!e.target.classList.contains('tf-btn')) return;
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  state.interval = e.target.dataset.tf;
+  persist();
+  renderGrid();
+});
+
+document.querySelectorAll('.tf-btn').forEach(b => {
+  b.classList.toggle('active', b.dataset.tf === state.interval);
+});
+
+/* ===================================================
+   ADD / REMOVE PAIRS
+   =================================================== */
+document.getElementById('add-btn').addEventListener('click', addPair);
+document.getElementById('pair-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addPair();
+});
+
+function addPair() {
+  const input = document.getElementById('pair-input');
+  const symbol = normalizeSymbol(input.value);
+  if (!symbol) return;
+  const list = activeList();
+  if (list.pairs.includes(symbol)) {
+    input.value = '';
+    input.style.borderColor = 'var(--danger)';
+    setTimeout(() => { input.style.borderColor = ''; }, 1000);
+    return;
+  }
+  list.pairs.push(symbol);
+  input.value = '';
+  persist();
+  renderGrid();
+  renderWatchlists();
+}
+
+function removePair(symbol) {
+  const list = activeList();
+  list.pairs = list.pairs.filter(p => p !== symbol);
+  persist();
+  renderGrid();
+  renderWatchlists();
+}
+
+/* ===================================================
+   QUICK ADD CHIPS
+   =================================================== */
+function refreshChips() {
+  const list = activeList();
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.classList.toggle('added', list.pairs.includes(chip.dataset.add));
+  });
+}
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const symbol = chip.dataset.add;
+    const list = activeList();
+    if (list.pairs.includes(symbol)) {
+      removePair(symbol);
+    } else {
+      list.pairs.push(symbol);
+      persist();
+      renderGrid();
+      renderWatchlists();
+    }
+  });
+});
+
+/* ===================================================
+   RENDER GRID OF CHARTS
+   =================================================== */
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const list = activeList();
+  document.getElementById('count').textContent = list.pairs.length;
+
+  if (list.pairs.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <h3>Watchlist "${escapeHtml(list.name)}" chưa có cặp nào</h3>
+        <p>Click chip ở thanh phía trên, hoặc gõ ký hiệu vào ô input để thêm</p>
+      </div>`;
+    refreshChips();
+    return;
+  }
+
+  list.pairs.forEach((symbol, idx) => {
+    const containerId = widgetIdFor(symbol, idx);
+    const parts = symbol.split(':');
+    const exchange = parts[0];
+    const ticker = parts[1] || '';
+
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.dataset.symbol = symbol;
+    card.innerHTML = `
+      <div class="chart-card-header">
+        <div class="chart-symbol"><span class="ex">${exchange}:</span><span class="tk">${ticker}</span></div>
+        <button class="chart-remove" title="Xóa cặp này" data-symbol="${symbol}">×</button>
+      </div>
+      <div class="chart-container" id="${containerId}"></div>
+    `;
+    grid.appendChild(card);
+
+    // Create the TradingView widget
+    if (window.TradingView && window.TradingView.widget) {
+      new TradingView.widget({
+        autosize: true,
+        symbol: symbol,
+        interval: state.interval,
+        timezone: 'Etc/UTC',
+        theme: state.theme,
+        style: '1',
+        locale: 'en',
+        toolbar_bg: state.theme === 'dark' ? '#141414' : '#ffffff',
+        enable_publishing: false,
+        hide_top_toolbar: false,
+        hide_side_toolbar: true,
+        allow_symbol_change: true,
+        studies: ['BB@tv-basicstudies', 'StochasticRSI@tv-basicstudies', 'MACD@tv-basicstudies'],
+        container_id: containerId
+      });
+    }
+  });
+
+  grid.querySelectorAll('.chart-remove').forEach(btn => {
+    btn.addEventListener('click', () => removePair(btn.dataset.symbol));
+  });
+
+  refreshChips();
+  setupGridDrag();
+}
+
+/* ===================================================
+   WATCHLIST TABS (render + management)
+   =================================================== */
+function renderWatchlists() {
+  const container = document.getElementById('watchlists');
+  container.innerHTML = '';
+
+  state.watchlists.forEach(wl => {
+    const tab = document.createElement('div');
+    tab.className = 'watchlist-tab' + (wl.id === state.activeWatchlistId ? ' active' : '');
+    tab.dataset.id = wl.id;
+    tab.innerHTML = `
+      <span class="tab-name" title="Double-click để đổi tên">${escapeHtml(wl.name)}</span>
+      <span class="tab-count">${wl.pairs.length}</span>
+      <button class="tab-delete" title="Xóa watchlist này">×</button>
+    `;
+    // Click → switch (unless click was on delete button)
+    tab.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tab-delete')) {
+        e.stopPropagation();
+        deleteWatchlist(wl.id);
+        return;
+      }
+      switchWatchlist(wl.id);
+    });
+    // Double-click name → rename
+    tab.querySelector('.tab-name').addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      renameWatchlist(wl.id);
+    });
+    container.appendChild(tab);
+  });
+
+  // "+ Mới" button
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-watchlist-btn';
+  addBtn.textContent = '+ Mới';
+  addBtn.title = 'Tạo watchlist mới';
+  addBtn.addEventListener('click', addNewWatchlist);
+  container.appendChild(addBtn);
+
+  setupTabDrag();
+}
+
+function switchWatchlist(id) {
+  if (id === state.activeWatchlistId) return;
+  state.activeWatchlistId = id;
+  persist();
+  renderWatchlists();
+  renderGrid();
+}
+
+function addNewWatchlist() {
+  const name = prompt('Tên watchlist mới:', '');
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  const id = 'wl_' + Date.now();
+  state.watchlists.push({ id, name: trimmed, pairs: [] });
+  state.activeWatchlistId = id;
+  persist();
+  renderWatchlists();
+  renderGrid();
+}
+
+function renameWatchlist(id) {
+  const wl = state.watchlists.find(w => w.id === id);
+  if (!wl) return;
+  const newName = prompt('Đổi tên watchlist:', wl.name);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) return;
+  wl.name = trimmed;
+  persist();
+  renderWatchlists();
+}
+
+function deleteWatchlist(id) {
+  if (state.watchlists.length <= 1) {
+    alert('Cần giữ ít nhất 1 watchlist.');
+    return;
+  }
+  const wl = state.watchlists.find(w => w.id === id);
+  if (!wl) return;
+  const msg = wl.pairs.length > 0
+    ? `Xóa watchlist "${wl.name}"? Tất cả ${wl.pairs.length} cặp trong này sẽ bị xóa.`
+    : `Xóa watchlist "${wl.name}"?`;
+  if (!confirm(msg)) return;
+  state.watchlists = state.watchlists.filter(w => w.id !== id);
+  if (state.activeWatchlistId === id) {
+    state.activeWatchlistId = state.watchlists[0].id;
+  }
+  persist();
+  renderWatchlists();
+  renderGrid();
+}
+
+/* ===================================================
+   EXPORT / IMPORT (JSON backup)
+   =================================================== */
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    title: state.title,
+    theme: state.theme,
+    interval: state.interval,
+    activeWatchlistId: state.activeWatchlistId,
+    watchlists: state.watchlists,
+    logo: state.logo
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `dashboard-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function handleImportFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    let data;
+    try {
+      data = JSON.parse(e.target.result);
+    } catch (err) {
+      alert('Lỗi đọc JSON: ' + err.message);
+      return;
+    }
+    if (!data.watchlists || !Array.isArray(data.watchlists) || data.watchlists.length === 0) {
+      alert('File không hợp lệ: thiếu trường watchlists');
+      return;
+    }
+    // Validate basic structure of each watchlist
+    const valid = data.watchlists.every(w => w && typeof w.id === 'string'
+      && typeof w.name === 'string' && Array.isArray(w.pairs));
+    if (!valid) {
+      alert('File không hợp lệ: cấu trúc watchlist sai');
+      return;
+    }
+    const total = data.watchlists.reduce((s, w) => s + w.pairs.length, 0);
+    if (!confirm(`Import ${data.watchlists.length} watchlist với ${total} cặp? Dữ liệu hiện tại sẽ bị thay thế.`)) {
+      return;
+    }
+    // Apply
+    state.watchlists = data.watchlists;
+    state.activeWatchlistId = data.watchlists.some(w => w.id === data.activeWatchlistId)
+      ? data.activeWatchlistId
+      : data.watchlists[0].id;
+    if (typeof data.title === 'string') state.title = data.title;
+    if (data.theme === 'dark' || data.theme === 'light') state.theme = data.theme;
+    if (typeof data.interval === 'string') state.interval = data.interval;
+    if (typeof data.logo === 'string') state.logo = data.logo;
+    persist();
+    // Re-render UI to reflect new state
+    applyTheme();
+    titleEl.textContent = state.title;
+    if (state.logo) {
+      logoImg.src = state.logo;
+      logoImg.style.display = 'block';
+      logoPlaceholder.style.display = 'none';
+    }
+    document.querySelectorAll('.tf-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tf === state.interval);
+    });
+    renderWatchlists();
+    renderGrid();
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('export-btn').addEventListener('click', exportData);
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleImportFile(file);
+  e.target.value = ''; // allow re-importing same filename
+});
+
+/* ===================================================
+   DRAG & DROP — TABS
+   =================================================== */
+let draggedTab = null;
+function setupTabDrag() {
+  const container = document.getElementById('watchlists');
+  container.querySelectorAll('.watchlist-tab').forEach(tab => {
+    tab.draggable = true;
+
+    tab.addEventListener('dragstart', (e) => {
+      draggedTab = tab;
+      tab.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', tab.dataset.id);
+    });
+
+    tab.addEventListener('dragend', () => {
+      tab.classList.remove('dragging');
+      draggedTab = null;
+    });
+
+    tab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!draggedTab || draggedTab === tab) return;
+      const rect = tab.getBoundingClientRect();
+      const midX = rect.left + rect.width / 2;
+      if (e.clientX < midX) {
+        container.insertBefore(draggedTab, tab);
+      } else {
+        container.insertBefore(draggedTab, tab.nextSibling);
+      }
+    });
+  });
+
+  container.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const newOrder = Array.from(container.querySelectorAll('.watchlist-tab'))
+      .map(t => t.dataset.id);
+    state.watchlists.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+    persist();
+  });
+}
+
+/* ===================================================
+   DRAG & DROP — CHART CARDS
+   =================================================== */
+let draggedCard = null;
+function setupGridDrag() {
+  const grid = document.getElementById('grid');
+  grid.querySelectorAll('.chart-card').forEach(card => {
+    card.draggable = true;
+
+    card.addEventListener('dragstart', (e) => {
+      draggedCard = card;
+      card.classList.add('dragging');
+      document.body.classList.add('dragging-active');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', card.dataset.symbol);
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.body.classList.remove('dragging-active');
+      draggedCard = null;
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!draggedCard || draggedCard === card) return;
+      const rect = card.getBoundingClientRect();
+      const midX = rect.left + rect.width / 2;
+      if (e.clientX < midX) {
+        grid.insertBefore(draggedCard, card);
+      } else {
+        grid.insertBefore(draggedCard, card.nextSibling);
+      }
+    });
+  });
+
+  grid.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const newOrder = Array.from(grid.querySelectorAll('.chart-card'))
+      .map(c => c.dataset.symbol);
+    const list = activeList();
+    list.pairs.sort((a, b) => newOrder.indexOf(a) - newOrder.indexOf(b));
+    persist();
+  });
+}
+
+/* ===================================================
+   INITIAL RENDER
+   =================================================== */
+applyTheme();
+window.addEventListener('load', () => {
+  renderWatchlists();
+  renderGrid();
+});
+</script>
+
+</body>
+</html>
